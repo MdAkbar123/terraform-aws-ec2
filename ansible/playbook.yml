@@ -1,0 +1,25 @@
+---
+- name: configure webserver
+  hosts: web
+  become: true
+  tasks:
+    - name: update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: ensure nginx running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: write index.html
+      copy:
+        dest: /var/www/html/index.html
+        content: "<h1>Deployed via Terraform + Ansible</h1><p>Provisioned at {{ lookup('pipe','date') }}</p>"
