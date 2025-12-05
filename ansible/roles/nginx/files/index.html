@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Terraform + Ansible DevOps Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.1);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1080px;
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+      box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.25), transparent 60%);
+    }
+
+    .traffic-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+
+    .dot.red {
+      background: #f97373;
+    }
+
+    .dot.yellow {
+      background: #facc15;
+    }
+
+    .dot.green {
+      background: #22c55e;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title-block span:first-child {
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .title-block span:last-child {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .pill {
+      margin-left: auto;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+    }
+
+    .content {
+      padding: 22px 22px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 800px) {
+      .content {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      border-radius: 16px;
+      border: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.2), var(--bg-card));
+      padding: 18px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-muted);
+    }
+
+    .hero-text {
+      font-size: 24px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    .hero-text span.highlight {
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 420px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .meta-item {
+      border-radius: 12px;
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .meta-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+    }
+
+    .meta-value {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .terminal {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      background: #020617;
+      border-radius: 13px;
+      border: 1px solid rgba(30, 64, 175, 0.9);
+      padding: 10px 12px;
+      color: #e5e7eb;
+      overflow-x: auto;
+      box-shadow: inset 0 0 18px rgba(15, 23, 42, 0.95);
+    }
+
+    .terminal-line {
+      white-space: pre;
+    }
+
+    .terminal-line span.caret {
+      color: #4ade80;
+    }
+
+    .terminal-line span.cmd {
+      color: #93c5fd;
+    }
+
+    .terminal-line span.ok {
+      color: #4ade80;
+    }
+
+    .terminal-line span.dim {
+      color: #6b7280;
+    }
+
+    .stack-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .stack-pill {
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #e0f2fe;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .footer-note {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .arch-diagram {
+      margin-top: 4px;
+      border-radius: 10px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      padding: 8px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.9);
+      color: #cbd5f5;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .small-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .deploy-time {
+      font-size: 13px;
+      color: #e5e7eb;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .link {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="traffic-dots">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <div class="title-block">
+        <span>DevOps • AWS • Automation</span>
+        <span>NGINX on EC2 — Deployed via Terraform + Ansible</span>
+      </div>
+      <div class="pill">
+        <span class="pill-dot"></span>
+        <span>Instance is up</span>
+      </div>
+    </header>
+
+    <section class="content">
+      <!-- Left: Overview & meta -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">Deployment Overview</div>
+          <div class="badge">IaC First</div>
+        </div>
+
+        <div class="hero-text">
+          This EC2 web server was <span class="highlight">provisioned end-to-end</span> using Terraform for infrastructure and Ansible for configuration management.
+        </div>
+
+        <p class="hero-sub">
+          No manual clicks in the AWS console. The entire stack is defined as code, making it reproducible, version-controlled, and ready for CI/CD integration.
+        </p>
+
+        <div class="meta">
+          <div class="meta-item">
+            <div class="meta-label">Cloud</div>
+            <div class="meta-value">AWS EC2 (Ubuntu 24.04)</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Region</div>
+            <div class="meta-value">ap-south-1 (Mumbai)</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Provisioned With</div>
+            <div class="meta-value">Terraform + Ansible</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Web Server</div>
+            <div class="meta-value">NGINX (systemd managed)</div>
+          </div>
+        </div>
+
+        <div class="footer-note">
+          This page is served directly from <code>/var/www/html/index.html</code> on the EC2 instance.
+        </div>
+      </section>
+
+      <!-- Right: Stack, architecture & terminal -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">Tech Stack & Runbook</div>
+          <div class="badge">Hands-On DevOps</div>
+        </div>
+
+        <div class="small-label">Stack</div>
+        <div class="stack-list">
+          <span class="stack-pill">AWS EC2</span>
+          <span class="stack-pill">Terraform (tls, aws, local)</span>
+          <span class="stack-pill">Ansible (nginx role)</span>
+          <span class="stack-pill">Cloud-Init user_data</span>
+          <span class="stack-pill">Systemd</span>
+          <span class="stack-pill">Linux (Ubuntu)</span>
+        </div>
+
+        <div class="small-label" style="margin-top: 12px;">High-Level Architecture</div>
+        <div class="arch-diagram">
+Internet
+   │
+   ▼
+AWS VPC (Default)
+   │
+   ├─ Security Group
+   │    • Ingress: 22 (SSH), 80 (HTTP)
+   │    • Egress: All
+   │
+   └─ EC2 Instance (t2.micro)
+         • Ubuntu 24.04
+         • NGINX serving this page
+         • Managed by Terraform + Ansible
+        </div>
+
+        <div class="small-label" style="margin-top: 12px;">Deployment Log (Conceptual)</div>
+        <div class="terminal">
+          <div class="terminal-line"><span class="caret">▶</span> <span class="cmd">terraform apply</span></div>
+          <div class="terminal-line"><span class="dim">   + aws_instance.web</span>       <span class="ok">created</span></div>
+          <div class="terminal-line"><span class="dim">   + aws_security_group.web_sg</span> <span class="ok">created</span></div>
+          <div class="terminal-line"><span class="dim">   + tls_private_key.ssh_key</span>   <span class="ok">created</span></div>
+          <div class="terminal-line"><span class="dim">   + aws_key_pair.generated</span>    <span class="ok">created</span></div>
+          <div class="terminal-line"><span class="dim">   + local_file.private_key</span>    <span class="ok">written</span></div>
+          <div class="terminal-line"><span class="dim">Apply complete! Resources: 5 added, 0 changed, 0 destroyed.</span></div>
+          <br />
+          <div class="terminal-line"><span class="caret">▶</span> <span class="cmd">ansible-playbook site.yml -i inventory</span></div>
+          <div class="terminal-line"><span class="dim">   - Install & enable nginx</span>    <span class="ok">ok</span></div>
+          <div class="terminal-line"><span class="dim">   - Deploy custom index.html</span>  <span class="ok">ok</span></div>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <div class="small-label">Deployed At</div>
+          <div class="deploy-time">
+            Fri Dec 5, 2025 — Provisioned via Terraform; configured via Ansible.
+          </div>
+          <div class="tagline">
+            Ready to be plugged into a CI/CD pipeline, blue-green deployment strategy, or extended with monitoring (CloudWatch, Prometheus, etc.).
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

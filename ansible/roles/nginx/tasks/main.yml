@@ -1,0 +1,24 @@
+---
+- name: Install NGINX
+  ansible.builtin.package:
+    name: nginx
+    state: present
+
+- name: Ensure NGINX is enabled and running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Deploy custom index.html
+  ansible.builtin.copy:
+    src: index.html     # This file must be in roles/nginx/files/
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload NGINX to apply updates
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
